@@ -22,9 +22,11 @@ public class AudioExtractorActivity extends Activity {
 	private MediaPlayer mPlayer = null;
 
 	public AudioExtractorActivity() {
+		// create test directory if it does not exist
 		File dir = new File(Environment.getExternalStorageDirectory()
 				.getAbsolutePath() + "/" + relDirPath);
 		dir.mkdirs();
+		
 		filePath = new File(dir, fileName).getAbsolutePath();
 	}
 
