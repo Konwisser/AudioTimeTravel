@@ -15,8 +15,11 @@ public class AudioExtractorActivity extends Activity {
 	private static final String LOG_TAG = "AudioExtractorProto1";
 
 	private static final String relDirPath = "test/AudioExtractProto1";
-	private static final String fileName = "fullRecording.3gp";
-	private final String filePath;
+	private static final String fullRecordingFileName = "fullRecording.3gp";
+	private static final String extractedRecordingFileName = "fullRecording.3gp";
+
+	private final String fullRecFilePath;
+	private final String extractedRecFilePath;
 
 	private MediaRecorder mRecorder = null;
 	private MediaPlayer mPlayer = null;
@@ -26,8 +29,12 @@ public class AudioExtractorActivity extends Activity {
 		File dir = new File(Environment.getExternalStorageDirectory()
 				.getAbsolutePath() + "/" + relDirPath);
 		dir.mkdirs();
-		
-		filePath = new File(dir, fileName).getAbsolutePath();
+
+		fullRecFilePath = new File(dir, fullRecordingFileName)
+				.getAbsolutePath();
+
+		extractedRecFilePath = new File(dir, extractedRecordingFileName)
+				.getAbsolutePath();
 	}
 
 	@Override
@@ -40,7 +47,7 @@ public class AudioExtractorActivity extends Activity {
 		mRecorder = new MediaRecorder();
 		mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 		mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-		mRecorder.setOutputFile(filePath);
+		mRecorder.setOutputFile(fullRecFilePath);
 		mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
 		try {
@@ -65,7 +72,7 @@ public class AudioExtractorActivity extends Activity {
 		mPlayer = new MediaPlayer();
 
 		try {
-			mPlayer.setDataSource(filePath);
+			mPlayer.setDataSource(fullRecFilePath);
 			mPlayer.prepare();
 			mPlayer.start();
 		} catch (IOException e) {
