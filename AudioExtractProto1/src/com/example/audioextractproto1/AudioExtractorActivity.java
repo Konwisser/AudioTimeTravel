@@ -3,6 +3,9 @@ package com.example.audioextractproto1;
 import java.io.File;
 import java.io.IOException;
 
+import com.ringdroid.soundfile.CheapAAC;
+import com.ringdroid.soundfile.CheapSoundFile;
+
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -14,12 +17,13 @@ import android.view.View;
 public class AudioExtractorActivity extends Activity {
 	private static final String LOG_TAG = "AudioExtractorProto1";
 
-	private static final String relDirPath = "test/AudioExtractProto1";
-	private static final String fullRecordingFileName = "fullRecording.3gp";
-	private static final String extractedRecordingFileName = "fullRecording.3gp";
+	private final String relDirPath = "test/AudioExtractProto1";
+
+	private final String fullRecFileName = "FullRecording3.aac";
+	private static final String extracRecFileName = "extractedRecording.aac";
 
 	private final String fullRecFilePath;
-	private final String extractedRecFilePath;
+	private final String extracRecFilePath;
 
 	private MediaRecorder mRecorder = null;
 	private MediaPlayer mPlayer = null;
@@ -30,11 +34,9 @@ public class AudioExtractorActivity extends Activity {
 				.getAbsolutePath() + "/" + relDirPath);
 		dir.mkdirs();
 
-		fullRecFilePath = new File(dir, fullRecordingFileName)
-				.getAbsolutePath();
+		fullRecFilePath = new File(dir, fullRecFileName).getAbsolutePath();
 
-		extractedRecFilePath = new File(dir, extractedRecordingFileName)
-				.getAbsolutePath();
+		extracRecFilePath = new File(dir, extracRecFileName).getAbsolutePath();
 	}
 
 	@Override
@@ -44,11 +46,13 @@ public class AudioExtractorActivity extends Activity {
 	}
 
 	public void startRecording(View view) {
+		Log.e(LOG_TAG, "starting recording in MPEG4 + AMR_WB -> m4a");
+
 		mRecorder = new MediaRecorder();
 		mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-		mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+		mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 		mRecorder.setOutputFile(fullRecFilePath);
-		mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+		mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
 		try {
 			mRecorder.prepare();
@@ -64,19 +68,59 @@ public class AudioExtractorActivity extends Activity {
 		mRecorder.release();
 		mRecorder = null;
 		Log.e(LOG_TAG, "stopped recording");
+
+		try {
+			extractLastFiveSecs();
+		} catch (IOException e) {
+			e.printStackTrace();
+			Log.d(LOG_TAG, "extractLastFiveSeconds failed");
+		}
+	}
+
+	private void extractLastFiveSecs() throws IOException {
+		CheapSoundFile aacFile = new CheapAAC();
+
+		aacFile.ReadFile(new File(fullRecFilePath));
+
+		// 5 secs before the end
+		double startTime = framesToSeconds(aacFile, aacFile.getNumFrames()) - 5;
+
+		final int startFrame = secondsToFrames(aacFile, startTime);
+		final int endFrame = aacFile.getNumFrames();
+
+		aacFile.WriteFile(new File(extracRecFilePath), startFrame, endFrame
+				- startFrame);
+	}
+
+	private int secondsToFrames(CheapSoundFile soundFile, double seconds) {
+		return (int) (1.0 * seconds * soundFile.getSampleRate()
+				/ soundFile.getSamplesPerFrame() + 0.5);
+	}
+
+	private double framesToSeconds(CheapSoundFile soundFile, int frames) {
+		return 1.0 * frames * soundFile.getSamplesPerFrame()
+				/ soundFile.getSampleRate();
 	}
 
 	public void startPlaying(View view) {
+		startPlaying(fullRecFilePath);
+	}
+
+	public void playExtracted(View view) {
+		startPlaying(extracRecFilePath);
+	}
+
+	private void startPlaying(String filePath) {
 		Log.e(LOG_TAG, "started playing");
 
 		mPlayer = new MediaPlayer();
 
 		try {
-			mPlayer.setDataSource(fullRecFilePath);
+			mPlayer.setDataSource(filePath);
 			mPlayer.prepare();
 			mPlayer.start();
 		} catch (IOException e) {
-			Log.e(LOG_TAG, "prepare() failed");
+			Log.e(LOG_TAG, "prepare() failed for " + filePath);
 		}
 	}
 

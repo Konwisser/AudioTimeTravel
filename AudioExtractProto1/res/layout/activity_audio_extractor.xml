@@ -55,6 +55,7 @@
         android:layout_below="@+id/startPlayBtn"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="42dp"
+        android:onClick="playExtracted"
         android:text="Play extracted last 5 seconds" />
 
 </RelativeLayout>
